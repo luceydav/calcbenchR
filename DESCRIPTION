@@ -1,0 +1,24 @@
+Package: calcbenchR
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.0.9000
+Authors@R: c(
+    person("David", "Lucey", , "david.lucey@mac.com", role = "cre"),
+    person("Andrew", "Kittredge", , "andrew@calcbench.com", role = "aut")
+  )
+Description: calcbenchR is package generated with openapi to enable access
+    to the calcbench API with R.
+License: MIT + file LICENSE
+URL: www.github.com/luceydav/calcbenchR
+BugReports: www.github.com/luceydav/calcbenchR/issues
+Encoding: UTF-8
+Language: es
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports: 
+    base64enc,
+    httr,
+    jsonlite,
+    R6,
+    stringr
+Suggests: 
+    testthat
