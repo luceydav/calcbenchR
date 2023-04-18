@@ -205,7 +205,7 @@ CompaniesApi <- R6::R6Class(
       local_var_content_types <- list()
 
       local_var_resp <- self$api_client$CallApi(url = paste0(self$api_client$base_path, local_var_url_path),
-                                 method = "POST",
+                                 method = "GET",
                                  query_params = query_params,
                                  header_params = header_params,
                                  form_params = form_params,

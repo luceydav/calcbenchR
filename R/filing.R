@@ -742,7 +742,7 @@ Filing <- R6::R6Class(
         if (!is.null(self$`percentage_revenue_change`)) {
           sprintf(
           '"percentage_revenue_change":
-            %d
+            %f
                     ',
           self$`percentage_revenue_change`
           )
@@ -750,7 +750,7 @@ Filing <- R6::R6Class(
         if (!is.null(self$`this_period_revenue`)) {
           sprintf(
           '"this_period_revenue":
-            %d
+            %f
                     ',
           self$`this_period_revenue`
           )

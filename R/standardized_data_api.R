@@ -37,7 +37,7 @@
 #' ####################  StandardizedDataMappedData  ####################
 #'
 #' library(calcbenchR)
-#' var_search_parameters <- MappedDataSearchParameters$new(StandardizedQueryParameters$new("pointInTime_example", "pointInTimeV2_example", "allFootnotes_example", "allFace_example", "includeXBRL_example", "includePreliminary_example", "allNonGAAP_example", "allMetrics_example", "excludeUnconfirmedPreliminary_example", c("metrics_example"), "includeTrace_example", "excludeErrors_example"), PeriodParameters$new(123, "unset", 123, "unset", "periodType_example", "useFiscalPeriod_example", DateRange$new("startDate_example", "endDate_example"), "allHistory_example", "updateDate_example", "updatedFrom_example", "asOriginallyReported_example", 123, 123), CompaniesParameters$new(c("companyIdentifiers_example"), "entireUniverse_example", c(123))) # MappedDataSearchParameters | 
+#' var_search_parameters <- MappedDataSearchParameters$new(StandardizedQueryParameters$new("pointInTime_example", "pointInTimeV2_example", "allFootnotes_example", "allFace_example", "includeXBRL_example", "includePreliminary_example", "allNonGAAP_example", "allMetrics_example", "excludeUnconfirmedPreliminary_example", c("metrics_example"), "includeTrace_example", "excludeErrors_example"), PeriodParameters$new(123, "unset", 123, "unset", "periodType_example", "useFiscalPeriod_example", DateRange$new("startDate_example", "endDate_example"), "allHistory_example", "updateDate_example", "updatedFrom_example", "asOriginallyReported_example", 123, 123), CompaniesParameters$new(c("companyIdentifiers_example"), "entireUniverse_example", c(123))) # MappedDataSearchParameters |
 #'
 #' api_instance <- StandardizedDataApi$new()
 #'
@@ -45,8 +45,6 @@
 #' # result <- api_instance$StandardizedDataMappedData(var_search_parametersdata_file = "result.txt")
 #' result <- api_instance$StandardizedDataMappedData(var_search_parameters)
 #' dput(result)
-#'
-#'
 #' }
 #' @importFrom R6 R6Class
 #' @importFrom base64enc base64encode
@@ -69,12 +67,12 @@ StandardizedDataApi <- R6::R6Class(
         self$api_client <- ApiClient$new()
       }
     },
-    #' 
+    #'
     #'
     #' @description
-    #' 
     #'
-    #' @param search_parameters 
+    #'
+    #' @param search_parameters
     #' @param data_file (optional) name of the data file to save the result
     #' @param ... Other optional arguments
     #' @return array[MappedDataPoint]
@@ -91,12 +89,12 @@ StandardizedDataApi <- R6::R6Class(
         local_var_response
       }
     },
-    #' 
+    #'
     #'
     #' @description
-    #' 
     #'
-    #' @param search_parameters 
+    #'
+    #' @param search_parameters
     #' @param data_file (optional) name of the data file to save the result
     #' @param ... Other optional arguments
     #' @return API response (array[MappedDataPoint]) with additional information such as HTTP status code, headers
@@ -108,7 +106,7 @@ StandardizedDataApi <- R6::R6Class(
       form_params <- list()
       file_params <- list()
       local_var_body <- NULL
-      oauth_scopes <- NULL
+      oauth_scopes <- NStandardizedDataMappedData
       is_oauth <- FALSE
 
       if (missing(`search_parameters`)) {
@@ -130,19 +128,20 @@ StandardizedDataApi <- R6::R6Class(
       # The Content-Type representation header
       local_var_content_types <- list("application/json", "text/json", "text/html", "application/x-www-form-urlencoded")
 
-      local_var_resp <- self$api_client$CallApi(url = paste0(self$api_client$base_path, local_var_url_path),
-                                 method = "POST",
-                                 query_params = query_params,
-                                 header_params = header_params,
-                                 form_params = form_params,
-                                 file_params = file_params,
-                                 accepts = local_var_accepts,
-                                 content_types = local_var_content_types,
-                                 body = local_var_body,
-                                 is_oauth = is_oauth,
-                                 oauth_scopes = oauth_scopes,
-                                 ...)
-
+      local_var_resp <- self$api_client$CallApi(
+        url = paste0(self$api_client$base_path, local_var_url_path),
+        method = "POST",
+        query_params = query_params,
+        header_params = header_params,
+        form_params = form_params,
+        file_params = file_params,
+        accepts = local_var_accepts,
+        content_types = local_var_content_types,
+        body = local_var_body,
+        is_oauth = is_oauth,
+        oauth_scopes = oauth_scopes,
+        ...
+      )
       if (local_var_resp$status_code >= 200 && local_var_resp$status_code <= 299) {
         # save response in a file
         if (!is.null(data_file)) {
