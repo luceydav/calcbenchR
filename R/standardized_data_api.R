@@ -106,7 +106,7 @@ StandardizedDataApi <- R6::R6Class(
       form_params <- list()
       file_params <- list()
       local_var_body <- NULL
-      oauth_scopes <- NStandardizedDataMappedData
+      oauth_scopes <- NULL
       is_oauth <- FALSE
 
       if (missing(`search_parameters`)) {
