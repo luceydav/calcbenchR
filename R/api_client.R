@@ -81,7 +81,6 @@ ApiClient <- R6::R6Class(
       if (!is.null(base_path)) {
         self$base_path <- base_path
       }
-      message(paste("base path is", base_path, "self$base_path is", self$base_path))
 
       if (!is.null(default_headers)) {
         self$default_headers <- default_headers
@@ -125,7 +124,7 @@ ApiClient <- R6::R6Class(
         self$max_retry_attempts <- max_retry_attempts
       }
       logon_url <- paste0(self$base_path, "account/LogOnAjax")
-      message(logon_url)
+
       query <- list(email = email, strng = strng)
       r <- POST(logon_url,
         body = query,
