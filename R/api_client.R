@@ -32,7 +32,7 @@
 #' @field retry_status_codes vector of status codes to retry
 #' @field max_retry_attempts maximum number of retries for the status codes
 #' @importFrom httr add_headers accept timeout content
-#' @export
+#' export
 ApiClient <- R6::R6Class(
   "ApiClient",
   public = list(
@@ -72,10 +72,10 @@ ApiClient <- R6::R6Class(
     #' @param timeout Timeout.
     #' @param retry_status_codes Status codes for retry.
     #' @param max_retry_attempts Maxmium number of retry.
-    #' @export
+    #' export
     initialize = function(base_path = NULL, user_agent = NULL,
                           default_headers = NULL,
-                          calcbench_username = NULL, password = NULL, api_keys = NULL,
+                          email = NULL, strng = NULL, api_keys = NULL,
                           access_token = NULL, bearer_token = NULL, timeout = NULL,
                           retry_status_codes = NULL, max_retry_attempts = NULL) {
       if (!is.null(base_path)) {
@@ -87,12 +87,12 @@ ApiClient <- R6::R6Class(
         self$default_headers <- default_headers
       }
 
-      if (!is.null(calcbench_username)) {
-        self$email <- calcbench_username
+      if (!is.null(email)) {
+        self$email <- email
       }
 
-      if (!is.null(password)) {
-        self$strng <- password
+      if (!is.null(strng)) {
+        self$strng <- strng
       }
 
       if (!is.null(access_token)) {
@@ -126,7 +126,7 @@ ApiClient <- R6::R6Class(
       }
       logon_url <- paste0(self$base_path, "account/LogOnAjax")
       message(logon_url)
-      query <- list(email = calcbench_username, password = password)
+      query <- list(email = email, strng = strng)
       r <- POST(logon_url,
         body = query,
         encode = "json",
@@ -152,7 +152,7 @@ ApiClient <- R6::R6Class(
     #' @param stream_callback Callback function to process the data stream
     #' @param ... Other optional arguments.
     #' @return HTTP response
-    #' @export
+    #' export
     CallApi = function(url, method, query_params, header_params, form_params,
                        file_params, accepts, content_types,
                        body, stream_callback = NULL, ...) {
@@ -201,7 +201,7 @@ ApiClient <- R6::R6Class(
     #' @param stream_callback Callback function to process data stream
     #' @param ... Other optional arguments.
     #' @return HTTP response
-    #' @export
+    #' export
     Execute = function(url, method, query_params, header_params,
                        form_params, file_params,
                        accepts, content_types,
@@ -321,7 +321,7 @@ ApiClient <- R6::R6Class(
     #' @param return_type R return type.
     #' @param pkg_env Package environment.
     #' @return Deserialized object.
-    #' @export
+    #' export
     deserialize = function(raw_response, return_type, pkg_env) {
       resp_obj <- jsonlite::fromJSON(raw_response)
       self$deserializeObj(resp_obj, return_type, pkg_env)
@@ -413,7 +413,7 @@ ApiClient <- R6::R6Class(
     #'
     #' @param headers A list of headers
     #' @return A header (e.g. 'application/json')
-    #' @export
+    #' export
     select_header = function(headers) {
       if (length(headers) == 0) {
         return(invisible(NULL))
