@@ -127,7 +127,7 @@ AvailableMetricsApi <- R6::R6Class(
                                  is_oauth = is_oauth,
                                  oauth_scopes = oauth_scopes,
                                  ...)
-
+      
       if (local_var_resp$status_code >= 200 && local_var_resp$status_code <= 299) {
         # save response in a file
         if (!is.null(data_file)) {
@@ -135,7 +135,7 @@ AvailableMetricsApi <- R6::R6Class(
         }
 
         deserialized_resp_obj <- tryCatch(
-          self$api_client$deserialize(local_var_resp$response, "MetricGroups", loadNamespace("calcbenchR")),
+          self$api_client$deserialize(local_var_resp$response, "map(MetricGroups)", loadNamespace("calcbenchR")),
           error = function(e) {
             stop("Failed to deserialize response")
           }
