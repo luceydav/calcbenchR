@@ -19,7 +19,7 @@ get_standardized_data <-
     api_client <-
       ApiClient$new(
         email = Sys.getenv("CALCBENCH_USERNAME"),
-        strng = Sys.getenv("CALCBENCH_PASSWORD")
+        password = Sys.getenv("CALCBENCH_PASSWORD")
       )
     
     standardized_parameters <-
