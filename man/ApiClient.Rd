@@ -41,7 +41,7 @@ Do not edit the class manually.
 
 \item{\code{email}}{email for HTTP basic authentication}
 
-\item{\code{strng}}{strng for HTTP basic authentication}
+\item{\code{password}}{password for HTTP basic authentication}
 
 \item{\code{api_keys}}{API keys}
 
@@ -78,7 +78,7 @@ Initialize a new ApiClient.
   user_agent = NULL,
   default_headers = NULL,
   email = NULL,
-  strng = NULL,
+  password = NULL,
   api_keys = NULL,
   access_token = NULL,
   bearer_token = NULL,
@@ -99,7 +99,7 @@ Initialize a new ApiClient.
 
 \item{\code{email}}{User name.}
 
-\item{\code{strng}}{strng.}
+\item{\code{password}}{password.}
 
 \item{\code{api_keys}}{API keys.}
 
@@ -111,7 +111,9 @@ Initialize a new ApiClient.
 
 \item{\code{retry_status_codes}}{Status codes for retry.}
 
-\item{\code{max_retry_attempts}}{Maxmium number of retry.}
+\item{\code{max_retry_attempts}}{Maxmium number of retry.
+export
+Prepare to make an API call with the retry logic.}
 }
 \if{html}{\out{</div>}}
 }
@@ -166,6 +168,8 @@ Prepare to make an API call with the retry logic.
 }
 \subsection{Returns}{
 HTTP response
+export
+Make an API call
 }
 }
 \if{html}{\out{<hr>}}
@@ -218,6 +222,8 @@ Make an API call
 }
 \subsection{Returns}{
 HTTP response
+export
+Deserialize the content of API response to the given type.
 }
 }
 \if{html}{\out{<hr>}}
@@ -242,6 +248,8 @@ Deserialize the content of API response to the given type.
 }
 \subsection{Returns}{
 Deserialized object.
+export
+Deserialize the response from jsonlite object based on the given type
 }
 }
 \if{html}{\out{<hr>}}
@@ -289,6 +297,7 @@ return it. Otherwise, return the first one, if any.
 }
 \subsection{Returns}{
 A header (e.g. 'application/json')
+export
 }
 }
 \if{html}{\out{<hr>}}
