@@ -152,7 +152,7 @@ FilingsApi <- R6::R6Class(
         deserialized_resp_obj <- tryCatch(
           self$api_client$deserialize(local_var_resp$response, "array[Filing]", loadNamespace("calcbenchR")),
           error = function(e) {
-            stop("Failed to deserialize response")
+            stop("Failed to deserialize response", e)
           }
         )
         local_var_resp$content <- deserialized_resp_obj

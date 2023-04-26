@@ -25,7 +25,7 @@
 #' @field user_agent Default user agent
 #' @field default_headers Default headers
 #' @field email email for HTTP basic authentication
-#' @field strng strng for HTTP basic authentication
+#' @field password password for HTTP basic authentication
 #' @field api_keys API keys
 #' @field bearer_token Bearer token
 #' @field timeout Default timeout in seconds
@@ -44,8 +44,8 @@ ApiClient <- R6::R6Class(
     default_headers = NULL,
     # email (HTTP basic authentication)
     email = NULL,
-    # strng (HTTP basic authentication)
-    strng = NULL,
+    # password (HTTP basic authentication)
+    password = NULL,
     # API keys
     api_keys = NULL,
     # Bearer token
@@ -65,7 +65,7 @@ ApiClient <- R6::R6Class(
     #' @param user_agent User agent.
     #' @param default_headers Default headers.
     #' @param email User name.
-    #' @param strng strng.
+    #' @param password password.
     #' @param api_keys API keys.
     #' @param access_token Access token.
     #' @param bearer_token Bearer token.
@@ -75,13 +75,12 @@ ApiClient <- R6::R6Class(
     #' export
     initialize = function(base_path = NULL, user_agent = NULL,
                           default_headers = NULL,
-                          email = NULL, strng = NULL, api_keys = NULL,
+                          email = NULL, password = NULL, api_keys = NULL,
                           access_token = NULL, bearer_token = NULL, timeout = NULL,
                           retry_status_codes = NULL, max_retry_attempts = NULL) {
       if (!is.null(base_path)) {
         self$base_path <- base_path
       }
-      message(paste("base path is", base_path, "self$base_path is", self$base_path))
 
       if (!is.null(default_headers)) {
         self$default_headers <- default_headers
@@ -91,8 +90,8 @@ ApiClient <- R6::R6Class(
         self$email <- email
       }
 
-      if (!is.null(strng)) {
-        self$strng <- strng
+      if (!is.null(password)) {
+        self$password <- password
       }
 
       if (!is.null(access_token)) {
@@ -125,8 +124,8 @@ ApiClient <- R6::R6Class(
         self$max_retry_attempts <- max_retry_attempts
       }
       logon_url <- paste0(self$base_path, "account/LogOnAjax")
-      message(logon_url)
-      query <- list(email = email, strng = strng)
+
+      query <- list(email = email, password = password)
       r <- POST(logon_url,
         body = query,
         encode = "json",

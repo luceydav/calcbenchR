@@ -55,7 +55,7 @@ get_filings <- function(
   api_client <-
     ApiClient$new(
       email = Sys.getenv("CALCBENCH_USERNAME"),
-      strng = Sys.getenv("CALCBENCH_PASSWORD")
+      password = Sys.getenv("CALCBENCH_PASSWORD")
     )
   
   #httr::set_config(config(ssl_verifypeer = 0L))
