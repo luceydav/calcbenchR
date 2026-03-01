@@ -31,3 +31,5 @@ jobs:
           roxygen2::roxygenize('.', roclets = c('rd', 'collate', 'namespace'))
         shell: Rscript {0}
       - uses: r-lib/actions/check-r-package@v2
+        with:
+          error-on: '"error"'
