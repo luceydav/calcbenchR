@@ -18,3 +18,5 @@
 ^git_push\.sh$
 ^calcbenchR\.Rcheck$
 ^\.\.Rcheck$
+^doc$
+^Meta$
