@@ -13,7 +13,7 @@ BugReports: www.github.com/luceydav/calcbenchR/issues
 Encoding: UTF-8
 Language: es
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.3
 Imports: 
     base64enc,
     data.table,
