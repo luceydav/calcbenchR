@@ -50,7 +50,23 @@ companies[ticker == "AAPL"]
 aapl_filings <- get_filings(companies = list("AAPL"))
 aapl_filings[filing_type == "annualQuarterlyReport", .(filing_date, fiscal_year, sec_html_url)]
 
-# Get standardized financial data (premium subscription required)
+# As-reported income statement
+income <- get_face_statement("AAPL", statement_type = "income")
+
+# Footnote / disclosure search
+disclosures <- get_disclosures(
+  companies        = list("AAPL"),
+  year             = 2023,
+  disclosure_names = list("RiskFactors")
+)
+
+# Raw XBRL facts
+raw <- get_raw_xbrl(companies = list("AAPL"))
+
+# M&A purchase price allocations
+ma <- get_business_combinations(companies = list("MSFT"))
+
+# Standardized financial data (premium subscription required)
 ebit <- get_standardized_data(
   metrics     = list("EBIT", "Revenue"),
   companies   = list("AAPL", "MSFT"),
@@ -72,6 +88,14 @@ vignette("calcbenchR")
 | `get_available_companies()` | Company universe with metadata | No |
 | `get_filings()` | SEC filing metadata | No |
 | `get_standardized_data()` | Normalized financial metrics | **Yes** |
+| `get_dimensional_data()` | Segment / dimensional data | **Yes** |
+| `get_disclosures()` | Footnotes, MD&A, and text block search | No |
+| `get_face_statement()` | As-reported financial statements | No |
+| `get_business_combinations()` | M&A purchase price allocations | No |
+| `get_raw_xbrl()` | Raw as-reported XBRL data points | No |
+| `get_non_xbrl_data()` | Non-XBRL numeric data from press releases | No |
+| `get_xbrl_tag_values()` | Multi-company XBRL tag / metric values | No |
+| `get_13f_data()` | Form 13F institutional holdings data | No |
 
 ## Error Handling
 

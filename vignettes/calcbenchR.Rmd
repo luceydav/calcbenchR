@@ -23,10 +23,20 @@ has_creds <- nchar(Sys.getenv("CALCBENCH_USERNAME")) > 0 &&
 standardized and as-reported XBRL data from SEC filings. **calcbenchR** is an R
 wrapper around the Calcbench REST API, giving you access to:
 
-- **Available metrics** — the full taxonomy of standardized financial line items
-- **Available companies** — the universe of companies Calcbench covers
-- **Filings** — SEC filing metadata (10-K, 10-Q, 8-K, etc.)
-- **Standardized financial data** — normalized metrics across companies and periods *(premium)*
+| Function | Description | Requires Premium |
+|---|---|---|
+| `get_available_metrics()` | Full metric taxonomy (face, ratio, footnote tables) | No |
+| `get_available_companies()` | Company universe with metadata | No |
+| `get_filings()` | SEC filing metadata (10-K, 10-Q, 8-K, etc.) | No |
+| `get_standardized_data()` | Normalized financial metrics | **Yes** |
+| `get_dimensional_data()` | Segment / dimensional data | **Yes** |
+| `get_disclosures()` | Footnotes, MD&A, and text block search | No |
+| `get_face_statement()` | As-reported financial statements | No |
+| `get_business_combinations()` | M&A purchase price allocations | No |
+| `get_raw_xbrl()` | Raw as-reported XBRL data points | No |
+| `get_non_xbrl_data()` | Non-XBRL numeric data from press releases | No |
+| `get_xbrl_tag_values()` | Multi-company XBRL tag / metric values | No |
+| `get_13f_data()` | Form 13F institutional holdings data | No |
 
 ## Setup
 
@@ -240,6 +250,151 @@ revenue[order(-fiscal_year, ticker)]
 # Wide format: one column per metric
 wide <- dcast(income_data, ticker + fiscal_year ~ metric, value.var = "value")
 wide[order(ticker, -fiscal_year)]
+```
+
+---
+
+## Get Dimensional / Segment Data *(Premium)*
+
+> **Note:** Requires a **Calcbench premium subscription**.
+
+`get_dimensional_data()` retrieves segment-level and other dimensional breakouts
+(the data behind [calcbench.com/segments](https://www.calcbench.com/segments)).
+
+```{r get-dimensional, eval=FALSE}
+# Operating segment revenue for Apple
+aapl_segments <- get_dimensional_data(
+  metrics     = list("OperatingSegmentRevenue"),
+  companies   = list("AAPL"),
+  all_history = TRUE
+)
+
+# View results
+aapl_segments[order(-fiscal_year, -fiscal_period),
+              .(ticker, metric, value, container, fiscal_year, fiscal_period)]
+```
+
+---
+
+## Search Disclosures and Footnotes
+
+`get_disclosures()` searches SEC filing text sections: footnotes, MD&A, risk
+factors, and other text blocks.
+
+```{r get-disclosures, eval=has_creds}
+# Risk factor disclosures for Apple, fiscal year 2023
+aapl_disclosures <- get_disclosures(
+  companies        = list("AAPL"),
+  year             = 2023,
+  disclosure_names = list("RiskFactors")
+)
+```
+
+```{r disclosures-preview, eval=has_creds}
+if (nrow(aapl_disclosures) > 0) {
+  aapl_disclosures[, .(ticker, fiscal_year, disclosure_type_name, filing_date)]
+}
+```
+
+### Full-text search
+
+```{r disclosures-fts, eval=FALSE}
+# Search all companies for "supply chain" mentions
+supply_chain <- get_disclosures(
+  companies             = list("AAPL", "MSFT"),
+  full_text_search_term = "supply chain",
+  all_history           = FALSE,
+  year                  = 2023
+)
+```
+
+---
+
+## Get As-Reported Face Statements
+
+`get_face_statement()` retrieves a single company's as-reported financial
+statement exactly as filed with the SEC.
+
+```{r get-face, eval=has_creds}
+# Apple's annual income statement
+aapl_income <- get_face_statement(
+  company        = "AAPL",
+  statement_type = "income",
+  period_type    = "annual",
+  all_history    = FALSE
+)
+```
+
+```{r face-preview, eval=has_creds}
+if (!is.null(aapl_income)) {
+  cat("Statement:", aapl_income$name, "\n")
+  cat("Columns:  ", length(aapl_income$columns), "\n")
+  cat("Line items:", length(aapl_income$line_items), "\n")
+}
+```
+
+Valid values for `statement_type`: `"income"`, `"balance"`, `"cash"`,
+`"change-in-equity"`, `"comprehensive-income"`.
+
+---
+
+## Get Business Combinations (M&A)
+
+`get_business_combinations()` returns purchase price allocation data for
+acquisitions filed in SEC documents.
+
+```{r get-bizcombo, eval=has_creds}
+# Microsoft acquisitions
+msft_acquisitions <- get_business_combinations(companies = list("MSFT"))
+```
+
+```{r bizcombo-preview, eval=has_creds}
+if (nrow(msft_acquisitions) > 0) {
+  msft_acquisitions[order(-acquisition_date),
+                    .(parent_company_ticker, target, acquisition_date,
+                      purchase_price)][1:5]
+}
+```
+
+---
+
+## Get Raw XBRL Data
+
+`get_raw_xbrl()` retrieves individual XBRL data points as originally tagged in
+SEC filings. Use `clauses` to filter by tag name, year, or period.
+
+```{r get-raw-xbrl, eval=FALSE}
+# All XBRL facts for Apple
+aapl_xbrl <- get_raw_xbrl(companies = list("AAPL"))
+
+# Filter by tag using a clause
+revenue_xbrl <- get_raw_xbrl(
+  companies = list("AAPL"),
+  clauses   = list(
+    list(value = "us-gaap:Revenues", parameter = "XBRLtag", operator = 1L)
+  )
+)
+```
+
+Clause operators: `1` = Equals, `10` = Contains, `21` = NotEquals.
+
+---
+
+## Get XBRL Tag Values (Multi-Company)
+
+`get_xbrl_tag_values()` pulls standardized metric values for specific XBRL tags
+or Calcbench metric names across multiple companies simultaneously.
+
+```{r get-xbrl-tags, eval=FALSE}
+# Revenue for S&P 500 via standardized metric name
+revenue_all <- get_xbrl_tag_values(
+  companies   = list("AAPL", "MSFT", "AMZN"),
+  metrics     = list("Revenue"),
+  all_history = FALSE
+)
+
+revenue_all[order(-fiscal_year, ticker),
+            .(ticker, metric, value, fiscal_year, fiscal_period)]
 ```
 
 ---

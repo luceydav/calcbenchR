@@ -63,10 +63,18 @@ export(XBRLstatement)
 export(XbrlQueryPiece)
 
 # Wrapper functions
+export(get_13f_data)
 export(get_available_companies)
 export(get_available_metrics)
+export(get_business_combinations)
+export(get_dimensional_data)
+export(get_disclosures)
+export(get_face_statement)
 export(get_filings)
+export(get_non_xbrl_data)
+export(get_raw_xbrl)
 export(get_standardized_data)
+export(get_xbrl_tag_values)
 
 # APIs
 export(AvailableMetricsApi)
