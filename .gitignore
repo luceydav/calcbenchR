@@ -35,3 +35,4 @@ vignettes/*.pdf
 *.knit.md
 /doc/
 /Meta/
+calcbench-swagger.json
