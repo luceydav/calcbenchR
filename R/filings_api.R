@@ -142,11 +142,11 @@ FilingsApi <- R6::R6Class(
                                  is_oauth = is_oauth,
                                  oauth_scopes = oauth_scopes,
                                  ...)
-
+      
       if (local_var_resp$status_code >= 200 && local_var_resp$status_code <= 299) {
         # save response in a file
         if (!is.null(data_file)) {
-          write(local_var_resp$response, data_file)
+          jsonlite::write_json(local_var_resp$response, data_file)
         }
 
         deserialized_resp_obj <- tryCatch(
@@ -156,7 +156,7 @@ FilingsApi <- R6::R6Class(
           }
         )
         local_var_resp$content <- deserialized_resp_obj
-        local_var_resp
+  
       } else if (local_var_resp$status_code >= 300 && local_var_resp$status_code <= 399) {
         ApiResponse$new(paste("Server returned ", local_var_resp$status_code, " response status code."), local_var_resp)
       } else if (local_var_resp$status_code >= 400 && local_var_resp$status_code <= 499) {

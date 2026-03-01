@@ -11,7 +11,7 @@ get_available_companies <- function(index) {
   api_client <-
     ApiClient$new(
       email = Sys.getenv("CALCBENCH_USERNAME"),
-      strng = Sys.getenv("CALCBENCH_PASSWORD")
+      password = Sys.getenv("CALCBENCH_PASSWORD")
     )
   
   # Get metrics
@@ -36,7 +36,7 @@ get_available_companies <- function(index) {
           fy_end_date_change = obj$FYEndDateChange,
           most_recent_complete_cy = obj$most_recent_complete_calendar_year,
           most_recent_filing = obj$most_recent_filing,
-          most_recent_filing_cp = obj$most_recent_filing_cp,
+          most_recent_filing_cp = obj$most_recent_filing_calendar_period,
           most_recent_filing_cy = obj$most_recent_filing_calendar_year,
           most_recent_fy = obj$most_recent_fiscal_year,
           most_recent_full_ye = obj$most_recent_full_year_end,
@@ -58,7 +58,7 @@ get_available_companies <- function(index) {
           zip = obj$zip
         )
     })
-  companies_data <- data.table::rbindlist(companies_list)
+  companies_data <- data.table::rbindlist(companies_list, fill=TRUE)
   return(companies_data)
   
 }

@@ -25,7 +25,7 @@
 #' @field user_agent Default user agent
 #' @field default_headers Default headers
 #' @field email email for HTTP basic authentication
-#' @field strng strng for HTTP basic authentication
+#' @field password password for HTTP basic authentication
 #' @field api_keys API keys
 #' @field bearer_token Bearer token
 #' @field timeout Default timeout in seconds
@@ -44,8 +44,8 @@ ApiClient <- R6::R6Class(
     default_headers = NULL,
     # email (HTTP basic authentication)
     email = NULL,
-    # strng (HTTP basic authentication)
-    strng = NULL,
+    # password (HTTP basic authentication)
+    password = NULL,
     # API keys
     api_keys = NULL,
     # Bearer token
@@ -56,6 +56,8 @@ ApiClient <- R6::R6Class(
     retry_status_codes = NULL,
     # Maximum number of retry attempts for the retry status codes
     max_retry_attempts = NULL,
+    # httr handle for cookie persistence across requests
+    httr_handle = NULL,
     #' Initialize a new ApiClient.
     #'
     #' @description
@@ -65,7 +67,7 @@ ApiClient <- R6::R6Class(
     #' @param user_agent User agent.
     #' @param default_headers Default headers.
     #' @param email User name.
-    #' @param strng strng.
+    #' @param password password.
     #' @param api_keys API keys.
     #' @param access_token Access token.
     #' @param bearer_token Bearer token.
@@ -75,13 +77,12 @@ ApiClient <- R6::R6Class(
     #' export
     initialize = function(base_path = NULL, user_agent = NULL,
                           default_headers = NULL,
-                          email = NULL, strng = NULL, api_keys = NULL,
+                          email = NULL, password = NULL, api_keys = NULL,
                           access_token = NULL, bearer_token = NULL, timeout = NULL,
                           retry_status_codes = NULL, max_retry_attempts = NULL) {
       if (!is.null(base_path)) {
         self$base_path <- base_path
       }
-      message(paste("base path is", base_path, "self$base_path is", self$base_path))
 
       if (!is.null(default_headers)) {
         self$default_headers <- default_headers
@@ -91,8 +92,8 @@ ApiClient <- R6::R6Class(
         self$email <- email
       }
 
-      if (!is.null(strng)) {
-        self$strng <- strng
+      if (!is.null(password)) {
+        self$password <- password
       }
 
       if (!is.null(access_token)) {
@@ -124,15 +125,21 @@ ApiClient <- R6::R6Class(
       if (!is.null(max_retry_attempts)) {
         self$max_retry_attempts <- max_retry_attempts
       }
-      logon_url <- paste0(self$base_path, "account/LogOnAjax")
-      message(logon_url)
-      query <- list(email = email, strng = strng)
-      r <- POST(logon_url,
-        body = query,
-        encode = "json",
-      )
-      if (httr::content(r, "text") != "true") {
-        stop("login failed")
+      if (!is.null(email) && !is.null(password)) {
+        self$httr_handle <- httr::handle(self$base_path)
+        # Enable libcurl's in-memory cookie engine so Set-Cookie headers are tracked
+        curl::handle_setopt(self$httr_handle$handle, cookiefile = "")
+        logon_url <- paste0(self$base_path, "account/LogOnAjax")
+        # Match Python client: form-encoded POST with password + rememberMe
+        query <- list(email = email, password = password, rememberMe = "true")
+        r <- httr::POST(logon_url,
+          body = query,
+          encode = "form",
+          handle = self$httr_handle,
+        )
+        if (httr::content(r, "text") != "true") {
+          stop("login failed")
+        }
       }
     },
     #' Prepare to make an API call with the retry logic.
@@ -155,7 +162,7 @@ ApiClient <- R6::R6Class(
     #' export
     CallApi = function(url, method, query_params, header_params, form_params,
                        file_params, accepts, content_types,
-                       body, stream_callback = NULL, ...) {
+                       body, stream_callback = NULL, is_oauth = FALSE, oauth_scopes = NULL, ...) {
       resp <- self$Execute(url, method, query_params, header_params,
         form_params, file_params,
         accepts, content_types,
@@ -206,58 +213,53 @@ ApiClient <- R6::R6Class(
                        form_params, file_params,
                        accepts, content_types,
                        body, stream_callback = NULL, ...) {
-      headers <- httr::add_headers(c(header_params, self$default_headers))
+      headers <- httr::add_headers(.headers = c(header_params, self$default_headers))
 
       http_timeout <- NULL
       if (!is.null(self$timeout)) {
         http_timeout <- httr::timeout(self$timeout)
       }
 
-      # set HTTP accept header
+      # Build accept header if needed
       accept <- self$select_header(accepts)
-      if (!is.null(accept)) {
-        headers["Accept"] <- accept
-      }
+      accept_header <- if (!is.null(accept)) httr::accept(accept) else NULL
 
-      # set HTTP content-type header
-      content_type <- self$select_header(content_types)
-      if (!is.null(content_type)) {
-        headers["Content-Type"] <- content_type
-      }
+      # Use persistent handle so cookies from login are sent automatically
+      h <- self$httr_handle
 
       if (typeof(stream_callback) == "closure") { # stream data
         if (method == "GET") {
           httr::GET(url,
-            query = query_params, headers, http_timeout,
-            httr::user_agent(self$`user_agent`), write_stream(stream_callback), ...
+            query = query_params, headers, accept_header, http_timeout,
+            httr::user_agent(self$`user_agent`), write_stream(stream_callback), handle = h, ...
           )
         } else if (method == "POST") {
           httr::POST(url,
-            query = query_params, headers, body = body,
+            query = query_params, headers, accept_header, body = body,
             httr::content_type("application/json"), http_timeout,
-            httr::user_agent(self$`user_agent`), write_stream(stream_callback), ...
+            httr::user_agent(self$`user_agent`), write_stream(stream_callback), handle = h, ...
           )
         } else if (method == "PUT") {
           httr::PUT(url,
-            query = query_params, headers, body = body,
+            query = query_params, headers, accept_header, body = body,
             httr::content_type("application/json"), http_timeout,
-            http_timeout, httr::user_agent(self$`user_agent`), write_stream(stream_callback), ...
+            httr::user_agent(self$`user_agent`), write_stream(stream_callback), handle = h, ...
           )
         } else if (method == "PATCH") {
           httr::PATCH(url,
-            query = query_params, headers, body = body,
+            query = query_params, headers, accept_header, body = body,
             httr::content_type("application/json"), http_timeout,
-            http_timeout, httr::user_agent(self$`user_agent`), write_stream(stream_callback), ...
+            httr::user_agent(self$`user_agent`), write_stream(stream_callback), handle = h, ...
           )
         } else if (method == "HEAD") {
           httr::HEAD(url,
-            query = query_params, headers, http_timeout,
-            http_timeout, httr::user_agent(self$`user_agent`), write_stream(stream_callback), ...
+            query = query_params, headers, accept_header, http_timeout,
+            httr::user_agent(self$`user_agent`), write_stream(stream_callback), handle = h, ...
           )
         } else if (method == "DELETE") {
           httr::DELETE(url,
-            query = query_params, headers, http_timeout,
-            http_timeout, httr::user_agent(self$`user_agent`), write_stream(stream_callback), ...
+            query = query_params, headers, accept_header, http_timeout,
+            httr::user_agent(self$`user_agent`), write_stream(stream_callback), handle = h, ...
           )
         } else {
           err_msg <- "Http method must be `GET`, `HEAD`, `OPTIONS`, `POST`, `PATCH`, `PUT` or `DELETE`."
@@ -266,36 +268,36 @@ ApiClient <- R6::R6Class(
       } else { # no streaming
         if (method == "GET") {
           httr_response <- httr::GET(url,
-            query = query_params, headers, http_timeout,
-            httr::user_agent(self$`user_agent`), ...
+            query = query_params, headers, accept_header, http_timeout,
+            httr::user_agent(self$`user_agent`), handle = h, ...
           )
         } else if (method == "POST") {
           httr_response <- httr::POST(url,
-            query = query_params, headers, body = body,
+            query = query_params, headers, accept_header, body = body,
             httr::content_type("application/json"), http_timeout,
-            httr::user_agent(self$`user_agent`), ...
+            httr::user_agent(self$`user_agent`), handle = h, ...
           )
         } else if (method == "PUT") {
           httr_response <- httr::PUT(url,
-            query = query_params, headers, body = body,
+            query = query_params, headers, accept_header, body = body,
             httr::content_type("application/json"), http_timeout,
-            http_timeout, httr::user_agent(self$`user_agent`), ...
+            httr::user_agent(self$`user_agent`), handle = h, ...
           )
         } else if (method == "PATCH") {
           httr_response <- httr::PATCH(url,
-            query = query_params, headers, body = body,
+            query = query_params, headers, accept_header, body = body,
             httr::content_type("application/json"), http_timeout,
-            http_timeout, httr::user_agent(self$`user_agent`), ...
+            httr::user_agent(self$`user_agent`), handle = h, ...
           )
         } else if (method == "HEAD") {
           httr_response <- httr::HEAD(url,
-            query = query_params, headers, http_timeout,
-            http_timeout, httr::user_agent(self$`user_agent`), ...
+            query = query_params, headers, accept_header, http_timeout,
+            httr::user_agent(self$`user_agent`), handle = h, ...
           )
         } else if (method == "DELETE") {
           httr_response <- httr::DELETE(url,
-            query = query_params, headers, http_timeout,
-            http_timeout, httr::user_agent(self$`user_agent`), ...
+            query = query_params, headers, accept_header, http_timeout,
+            httr::user_agent(self$`user_agent`), handle = h, ...
           )
         } else {
           err_msg <- "Http method must be `GET`, `HEAD`, `OPTIONS`, `POST`, `PATCH`, `PUT` or `DELETE`."

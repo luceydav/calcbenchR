@@ -135,9 +135,9 @@ AvailableMetricsApi <- R6::R6Class(
         }
 
         deserialized_resp_obj <- tryCatch(
-          self$api_client$deserialize(local_var_resp$response, "map(MetricGroups)", loadNamespace("calcbenchR")),
+          self$api_client$deserialize(local_var_resp$response, "MetricGroups", loadNamespace("calcbenchR")),
           error = function(e) {
-            stop("Failed to deserialize response")
+            stop(paste("Failed to deserialize response:", conditionMessage(e)))
           }
         )
         local_var_resp$content <- deserialized_resp_obj
