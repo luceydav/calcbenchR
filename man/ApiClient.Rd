@@ -135,6 +135,8 @@ Prepare to make an API call with the retry logic.
   content_types,
   body,
   stream_callback = NULL,
+  is_oauth = FALSE,
+  oauth_scopes = NULL,
   ...
 )}\if{html}{\out{</div>}}
 }
