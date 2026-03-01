@@ -1,0 +1,273 @@
+---
+title: "Getting Started with calcbenchR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with calcbenchR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+# Only run API-calling chunks if credentials are available
+has_creds <- nchar(Sys.getenv("CALCBENCH_USERNAME")) > 0 &&
+             nchar(Sys.getenv("CALCBENCH_PASSWORD")) > 0
+```
+
+## Introduction
+
+[Calcbench](https://www.calcbench.com) is a financial data service that provides
+standardized and as-reported XBRL data from SEC filings. **calcbenchR** is an R
+wrapper around the Calcbench REST API, giving you access to:
+
+- **Available metrics** — the full taxonomy of standardized financial line items
+- **Available companies** — the universe of companies Calcbench covers
+- **Filings** — SEC filing metadata (10-K, 10-Q, 8-K, etc.)
+- **Standardized financial data** — normalized metrics across companies and periods *(premium)*
+
+## Setup
+
+Install from GitHub if you haven't already:
+
+```{r install, eval=FALSE}
+# install.packages("devtools")
+devtools::install_github("luceydav/calcbenchR")
+```
+
+```{r load, eval=has_creds}
+library(calcbenchR)
+library(data.table)
+```
+
+All functions authenticate using environment variables. Set these once per
+session (or add them to your `.Renviron` for persistence):
+
+```{r credentials, eval=FALSE}
+Sys.setenv(
+  CALCBENCH_USERNAME = "your_email@example.com",
+  CALCBENCH_PASSWORD = "your_password"
+)
+```
+
+You can verify they are set:
+
+```{r check-creds, eval=FALSE}
+nchar(Sys.getenv("CALCBENCH_USERNAME")) > 0  # should be TRUE
+```
+
+> **Tip:** Add `CALCBENCH_USERNAME=...` and `CALCBENCH_PASSWORD=...` to your
+> `~/.Renviron` file so credentials are available automatically in every R session.
+> Run `usethis::edit_r_environ()` to open the file.
+
+---
+
+## Discover Available Metrics
+
+`get_available_metrics()` returns the full Calcbench metric taxonomy with no
+arguments. The result is a named list of three `data.table`s:
+
+| Element     | Contents                                              |
+|-------------|-------------------------------------------------------|
+| `face`      | Income statement, balance sheet, and cash flow items  |
+| `ratio`     | Derived ratios (margins, turns, coverage, etc.)       |
+| `footnotes` | Footnote disclosures (lease obligations, segment data, etc.) |
+
+```{r get-metrics, eval=has_creds}
+metrics <- get_available_metrics()
+names(metrics)
+```
+
+Each table has the same structure:
+
+```{r metrics-structure, eval=has_creds}
+str(metrics$face[1:3])
+```
+
+### Browsing face statement metrics
+
+```{r face-metrics, eval=has_creds}
+# First few rows
+metrics$face[1:6, .(metric, name, section, period_type)]
+```
+
+```{r face-filter, eval=has_creds}
+# Find all revenue-related items
+metrics$face[grepl("revenue", name, ignore.case = TRUE), .(metric, name, section)]
+```
+
+```{r face-sections, eval=has_creds}
+# How many metrics per section?
+metrics$face[, .N, by = section][order(-N)]
+```
+
+### Browsing ratio metrics
+
+```{r ratio-metrics, eval=has_creds}
+# Margin-related ratios
+metrics$ratio[grepl("margin", name, ignore.case = TRUE), .(metric, name, description)]
+```
+
+### Browsing footnote metrics
+
+```{r footnote-metrics, eval=has_creds}
+# First few footnote metrics
+metrics$footnotes[1:5, .(metric, name, section)]
+```
+
+---
+
+## Discover Available Companies
+
+`get_available_companies()` returns a `data.table` of the companies in the
+Calcbench universe. Pass an index name to filter by index membership (e.g.
+`"SP500"`, `"DJIA"`, `"Russell3000"`), or `NULL` for the full universe.
+
+```{r get-companies, eval=has_creds}
+# S&P 500 companies
+companies <- get_available_companies(index = "SP500")
+nrow(companies)
+```
+
+```{r companies-cols, eval=has_creds}
+# All available columns
+names(companies)
+```
+
+```{r companies-head, eval=has_creds}
+# Core identifying fields (always populated)
+companies[1:5, .(ticker, entity_name, entity_id, CIK)]
+```
+
+### Filtering companies
+
+```{r companies-ticker, eval=has_creds}
+# Look up a specific ticker
+companies[ticker == "MSFT", .(ticker, entity_name, CIK, entity_id)]
+```
+
+```{r companies-recent, eval=has_creds}
+# Companies with the most recent filings
+companies[order(-most_recent_filing_cy, -most_recent_filing_cp),
+          .(ticker, entity_name, most_recent_filing_cy, most_recent_filing_cp)][1:10]
+```
+
+---
+
+## Get Filings
+
+`get_filings()` retrieves SEC filing metadata for one or more companies. You
+can filter by filing type, date range, and whether to include XBRL, non-XBRL,
+or press release filings.
+
+```{r get-filings, eval=has_creds}
+# Recent filings for Apple (10-Ks and 10-Qs)
+aapl_filings <- get_filings(companies = list("AAPL"))
+```
+
+```{r filings-preview, eval=has_creds}
+# Preview results
+head(aapl_filings[, .(ticker, entity_name, filing_type, filing_date, fiscal_year, fiscal_period)])
+```
+
+```{r filings-types, eval=has_creds}
+# Distribution of filing types
+aapl_filings[, .N, by = filing_type][order(-N)]
+```
+
+```{r filings-annual, eval=has_creds}
+# Annual and quarterly reports only
+aapl_filings[filing_type == "annualQuarterlyReport",
+             .(ticker, filing_date, fiscal_year, fiscal_period, sec_html_url)][1:5]
+```
+
+---
+
+## Get Standardized Financial Data *(Premium)*
+
+> **Note:** `get_standardized_data()` requires a **Calcbench premium subscription**.
+> Free and trial accounts will receive a 401 error with a message pointing to
+> [calcbench.com/home/plans](https://www.calcbench.com/home/plans).
+> The code below is shown with `eval=FALSE`; substitute your own credentials
+> and run it interactively if you have a premium account.
+
+`get_standardized_data()` pulls normalized financial metrics across one or more
+companies, returning a tidy `data.table` with one row per company/period/metric.
+
+```{r get-standardized, eval=FALSE}
+# EBIT for 3M Co, full history
+m3_ebit <- get_standardized_data(
+  metrics     = list("EBIT"),
+  companies   = list("3M Co"),
+  all_history = TRUE
+)
+```
+
+The returned `data.table` looks like this (example output):
+
+```
+   calcbench_entity_id ticker fiscal_year fiscal_period metric     value
+                 <int> <char>       <int>         <int> <char>     <num>
+1:               12345    MMM        2023             0   EBIT  3850000000
+2:               12345    MMM        2022             0   EBIT  4100000000
+3:               12345    MMM        2021             0   EBIT  3500000000
+```
+
+### Pulling multiple metrics and companies
+
+```{r multi-metrics, eval=FALSE}
+# Revenue and EBIT for several companies, last 5 years
+income_data <- get_standardized_data(
+  metrics   = list("Revenue", "EBIT", "NetIncome"),
+  companies = list("AAPL", "MSFT", "GOOGL"),
+  all_history = FALSE
+)
+```
+
+### data.table manipulation
+
+Once you have the data, standard `data.table` operations apply:
+
+```{r dt-filter, eval=FALSE}
+# Filter to a single metric
+revenue <- income_data[metric == "Revenue"]
+
+# Sort by year descending
+revenue[order(-fiscal_year, ticker)]
+
+# Wide format: one column per metric
+wide <- dcast(income_data, ticker + fiscal_year ~ metric, value.var = "value")
+wide[order(ticker, -fiscal_year)]
+```
+
+---
+
+## Error Handling
+
+### 401 Unauthorized
+
+A 401 error means one of two things:
+
+1. **Wrong credentials** — check that `CALCBENCH_USERNAME` and `CALCBENCH_PASSWORD`
+   are set correctly:
+   ```{r check-env, eval=FALSE}
+   Sys.getenv("CALCBENCH_USERNAME")
+   Sys.getenv("CALCBENCH_PASSWORD")
+   ```
+
+2. **Insufficient subscription** — `mappedData` (standardized data) and
+   `dimensionalData` (segments) require a premium account. Other endpoints
+   (metrics, companies, filings) are available on all plans.
+   Visit [calcbench.com/home/plans](https://www.calcbench.com/home/plans) to
+   upgrade.
+
+### Empty results
+
+If a function returns an empty `data.table`, confirm:
+
+- The company identifier matches Calcbench's name or ticker exactly
+  (use `get_available_companies()` to look it up)
+- The date/period range you specified contains filings
+- Your account has access to the requested data type

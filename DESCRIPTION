@@ -22,4 +22,7 @@ Imports:
     R6,
     stringr
 Suggests: 
+    knitr,
+    rmarkdown,
     testthat
+VignetteBuilder: knitr

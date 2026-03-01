@@ -86,9 +86,9 @@ FilingsApi <- R6::R6Class(
       } else if (local_var_response$status_code >= 300 && local_var_response$status_code <= 399) {
         local_var_response
       } else if (local_var_response$status_code >= 400 && local_var_response$status_code <= 499) {
-        local_var_response
+        stop(paste("API error", local_var_response$status_code, ":", local_var_response$response))
       } else if (local_var_response$status_code >= 500 && local_var_response$status_code <= 599) {
-        local_var_response
+        stop(paste("API server error", local_var_response$status_code, ":", local_var_response$response))
       }
     },
     #' 
@@ -156,9 +156,10 @@ FilingsApi <- R6::R6Class(
           }
         )
         local_var_resp$content <- deserialized_resp_obj
+        local_var_resp
   
       } else if (local_var_resp$status_code >= 300 && local_var_resp$status_code <= 399) {
-        ApiResponse$new(paste("Server returned ", local_var_resp$status_code, " response status code."), local_var_resp)
+        stop(paste("API redirect error", local_var_resp$status_code, ":", local_var_resp$response))
       } else if (local_var_resp$status_code == 401) {
         stop(paste(
           "API error 401: Authorization denied.",
@@ -168,7 +169,7 @@ FilingsApi <- R6::R6Class(
           "See https://www.calcbench.com/home/plans for subscription options."
         ))
       } else if (local_var_resp$status_code >= 400 && local_var_resp$status_code <= 499) {
-        ApiResponse$new("API client error", local_var_resp)
+        stop(paste("API error", local_var_resp$status_code, ":", local_var_resp$response))
       } else if (local_var_resp$status_code >= 500 && local_var_resp$status_code <= 599) {
         if (is.null(local_var_resp$response) || local_var_resp$response == "") {
           local_var_resp$response <- "API server error"

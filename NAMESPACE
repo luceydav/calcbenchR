@@ -62,6 +62,12 @@ export(XBRLcontext)
 export(XBRLstatement)
 export(XbrlQueryPiece)
 
+# Wrapper functions
+export(get_available_companies)
+export(get_available_metrics)
+export(get_filings)
+export(get_standardized_data)
+
 # APIs
 export(AvailableMetricsApi)
 export(BusinessCombinationsApi)

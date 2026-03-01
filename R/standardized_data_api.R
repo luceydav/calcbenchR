@@ -84,9 +84,9 @@ StandardizedDataApi <- R6::R6Class(
       } else if (local_var_response$status_code >= 300 && local_var_response$status_code <= 399) {
         local_var_response
       } else if (local_var_response$status_code >= 400 && local_var_response$status_code <= 499) {
-        local_var_response
+        stop(paste("API error", local_var_response$status_code, ":", local_var_response$response))
       } else if (local_var_response$status_code >= 500 && local_var_response$status_code <= 599) {
-        local_var_response
+        stop(paste("API server error", local_var_response$status_code, ":", local_var_response$response))
       }
     },
     #'

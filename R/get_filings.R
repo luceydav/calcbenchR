@@ -106,4 +106,30 @@ get_filings <- function(
   # Call FilingsV2
   filing_results <- filings_api$FilingsFilingsV2(
     filings_params = filing_parameters)
+  
+  # Convert to data.table
+  filings_data <- lapply(filing_results, function(obj) {
+    data.table::data.table(
+      calcbench_id        = obj$calcbench_id,
+      filing_id           = obj$filing_id,
+      entity_name         = obj$entity_name,
+      ticker              = obj$ticker,
+      entity_id           = obj$entity_id,
+      CIK                 = obj$CIK,
+      filing_type         = obj$filing_type,
+      document_type       = obj$document_type,
+      filing_date         = obj$filing_date,
+      period_end_date     = obj$period_end_date,
+      fiscal_year         = obj$fiscal_year,
+      fiscal_period       = obj$fiscal_period,
+      calendar_year       = obj$calendar_year,
+      calendar_period     = obj$calendar_period,
+      is_xbrl             = obj$is_xbrl,
+      is_wire             = obj$is_wire,
+      has_standardized_data = obj$has_standardized_data,
+      sec_html_url        = obj$sec_html_url,
+      sec_accession_id    = obj$sec_accession_id
+    )
+  })
+  data.table::rbindlist(filings_data, fill = TRUE)
 }
