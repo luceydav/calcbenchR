@@ -159,6 +159,14 @@ FilingsApi <- R6::R6Class(
   
       } else if (local_var_resp$status_code >= 300 && local_var_resp$status_code <= 399) {
         ApiResponse$new(paste("Server returned ", local_var_resp$status_code, " response status code."), local_var_resp)
+      } else if (local_var_resp$status_code == 401) {
+        stop(paste(
+          "API error 401: Authorization denied.",
+          "This endpoint requires a Calcbench premium subscription.",
+          "Verify your credentials are set via Sys.setenv(CALCBENCH_USERNAME=..., CALCBENCH_PASSWORD=...)",
+          "and that your account has access to the requested data.",
+          "See https://www.calcbench.com/home/plans for subscription options."
+        ))
       } else if (local_var_resp$status_code >= 400 && local_var_resp$status_code <= 499) {
         ApiResponse$new("API client error", local_var_resp)
       } else if (local_var_resp$status_code >= 500 && local_var_resp$status_code <= 599) {
